@@ -1,7 +1,9 @@
 import { useState } from "react"
+import { useAuthContext } from '../hooks/useAuthContext'
 import { useWorkoutsContext } from "../hooks/useWorkoutsContext"
 
 const WorkoutForm = () => {
+  const { user } = useAuthContext()
   const { dispatch } = useWorkoutsContext()
 
   const [title, setTitle] = useState('')
@@ -13,15 +15,24 @@ const WorkoutForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const workout = {title, load, reps}
+    if (!user) {
+      setError('You must be logged in')
+      return
+    }
+
+    const workout = { title, load, reps }
+
+    console.log(workout)
 
     const response = await fetch('/api/workouts', {
       method: 'POST',
       body: JSON.stringify(workout),
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user.token}`
       }
     })
+
     const json = await response.json()
 
     if (!response.ok) {
@@ -35,7 +46,7 @@ const WorkoutForm = () => {
       setError(null)
       setEmptyFields([])
       console.log('new workout added', json)
-      dispatch({type: 'CREATE_WORKOUT', payload: json})
+      dispatch({ type: 'CREATE_WORKOUT', payload: json })
     }
   }
 
@@ -44,7 +55,7 @@ const WorkoutForm = () => {
       <h3>Add a New Workout</h3>
 
       <label>Excersize Title:</label>
-      <input 
+      <input
         type="text"
         onChange={(e) => setTitle(e.target.value)}
         value={title}
@@ -52,7 +63,7 @@ const WorkoutForm = () => {
       />
 
       <label>Load (in kg):</label>
-      <input 
+      <input
         type="number"
         onChange={(e) => setLoad(e.target.value)}
         value={load}
@@ -60,7 +71,7 @@ const WorkoutForm = () => {
       />
 
       <label>Reps:</label>
-      <input 
+      <input
         type="number"
         onChange={(e) => setReps(e.target.value)}
         value={reps}
